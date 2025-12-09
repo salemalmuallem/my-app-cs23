@@ -1,7 +1,3 @@
-//Name: Salem Mubarak Salem Almuallem.
-//Major: Computer Science
-//Level: 4
-
 import 'package:flutter/material.dart';
 
 void main() {
@@ -14,111 +10,196 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'المسبحة الإلكترونية',
+      debugShowCheckedModeBanner: false,
+      title: 'حاسبة كروت شبكة الصقر نت',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color.fromARGB(255, 14, 18, 241),
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
-      home: const MyHomePage(title: 'المسبحة الإلكترونية'),
+      home: const Directionality(
+        textDirection: TextDirection.rtl, // جعل التطبيق من اليمين لليسار
+        child: CardCalculator(),
+      ),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
+class CardCalculator extends StatefulWidget {
+  const CardCalculator({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<CardCalculator> createState() => _CardCalculatorState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-  int _step = 0;
-  String _text = "سبحان الله";
-  String _buttonText = "سبح";
+class _CardCalculatorState extends State<CardCalculator> {
+  // البيانات الأساسية
+  final List<Map<String, dynamic>> _cards = [
+    {"name": "كرت أبو 100", "price": 70},
+    {"name": "كرت أبو 200", "price": 150},
+    {"name": "كرت أبو 300", "price": 250},
+    {"name": "كرت أبو 500", "price": 450},
+    {"name": "كرت أبو 1000", "price": 900},
+    {"name": "كرت أبو 1500", "price": 1350},
+    {"name": "كرت أبو 2000", "price": 1800},
+    {"name": "كرت أبو 3000", "price": 2700},
+    {"name": "كرت أبو 5000", "price": 4500},
+    {"name": "كرت أبو 7500", "price": 6750},
+  ];
 
-  void _incrementCounter() {
-    setState(() {
-      if (_step < 3) {
-        _counter++;
-        if (_counter > 33) {
-          _counter = 0;
-          _step++;
+  final List<TextEditingController> _nameControllers = [];
+  final List<TextEditingController> _priceControllers = [];
+  final List<TextEditingController> _qtyControllers = [];
 
-          if (_step == 1) {
-            _text = "الحمد لله";
-            _buttonText = "حمد";
-          } else if (_step == 2) {
-            _text = "الله أكبر";
-            _buttonText = "كبر";
-          } else if (_step == 3) {
-            _text =
-                "لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير";
-            _buttonText = "تم";
-          }
-        }
-      } else {
-        // بعد الانتهاء من الذكر الأخير
-        _showFinishDialog();
-      }
-    });
+  double _total = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    for (var card in _cards) {
+      _nameControllers.add(
+        TextEditingController(text: card["name"].toString()),
+      );
+      _priceControllers.add(
+        TextEditingController(text: card["price"].toString()),
+      );
+      _qtyControllers.add(TextEditingController());
+    }
+    _calculateTotal();
   }
 
-  void _showFinishDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("انتهاء التسبيح"),
-          content: const Text("لقد أنهيت جميع الأذكار. تقبل الله منك 🌸"),
-          actions: [
-            TextButton(
-              child: const Text("إعادة"),
-              onPressed: () {
-                Navigator.of(context).pop();
-                setState(() {
-                  _counter = 0;
-                  _step = 0;
-                  _text = "سبحان الله";
-                  _buttonText = "سبح";
-                });
-              },
-            ),
-          ],
-        );
-      },
-    );
+  @override
+  void dispose() {
+    for (var c in [
+      ..._nameControllers,
+      ..._priceControllers,
+      ..._qtyControllers,
+    ]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _calculateTotal() {
+    double sum = 0;
+    for (int i = 0; i < _cards.length; i++) {
+      final price = double.tryParse(_priceControllers[i].text) ?? 0;
+      final qty = int.tryParse(_qtyControllers[i].text) ?? 0;
+      sum += price * qty;
+    }
+    setState(() {
+      _total = sum;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        title: const Text("حاسبة كروت شبكة الصقر نت"),
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
-      body: Center(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(12),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              _text,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          children: [
+            Table(
+              border: TableBorder.all(color: Colors.black26),
+              columnWidths: const {
+                0: FlexColumnWidth(2), // الباقة
+                1: FlexColumnWidth(1.5), // السعر
+                2: FlexColumnWidth(1), // العدد
+                3: FlexColumnWidth(1.5), // الإجمالي
+              },
+              children: [
+                const TableRow(
+                  decoration: BoxDecoration(color: Color(0xFFE0E0E0)),
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Text("الباقة", textAlign: TextAlign.center),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Text("السعر", textAlign: TextAlign.center),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Text("العدد", textAlign: TextAlign.center),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Text("الإجمالي", textAlign: TextAlign.center),
+                    ),
+                  ],
+                ),
+                ...List.generate(_cards.length, (i) {
+                  final price = double.tryParse(_priceControllers[i].text) ?? 0;
+                  final qty = int.tryParse(_qtyControllers[i].text) ?? 0;
+                  final rowTotal = price * qty;
+
+                  return TableRow(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: TextField(
+                          controller: _nameControllers[i],
+                          textAlign: TextAlign.center,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                            contentPadding: EdgeInsets.all(8),
+                          ),
+                          onChanged: (_) => _calculateTotal(),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: TextField(
+                          controller: _priceControllers[i],
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                            contentPadding: EdgeInsets.all(8),
+                          ),
+                          onChanged: (_) => _calculateTotal(),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: TextField(
+                          controller: _qtyControllers[i],
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                            contentPadding: EdgeInsets.all(8),
+                          ),
+                          onChanged: (_) => _calculateTotal(),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Text(
+                          "$rowTotal",
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+              ],
             ),
             const SizedBox(height: 20),
-            if (_step < 3)
-              Text(
-                "33/$_counter",
-                style: Theme.of(context).textTheme.headlineMedium,
+            Text(
+              "الإجمالي الكلي: $_total ريال",
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
               ),
-            const SizedBox(height: 20),
-            FloatingActionButton.extended(
-              onPressed: _incrementCounter,
-              label: Text(_buttonText),
             ),
           ],
         ),
